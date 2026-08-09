@@ -195,7 +195,7 @@
         <p>Everyone answers the same question out loud — but the imposter secretly got a <em>different</em> question. Whose answer doesn't add up?</p>
       </div>
     </div>
-    <footer class="nav"><div class="sub" style="margin:0 auto;">18 categories · double agent mode · season scoreboard</div></footer>
+    <footer class="nav"><div class="sub" style="margin:0 auto;">19 categories · double agent mode · season scoreboard</div></footer>
   </section>
 
   <!-- ============ SETUP ============ -->
@@ -328,29 +328,139 @@
 <script>
 'use strict';
 
-/* ============ CONTENT — 18 categories of hand-matched word pairs ============
-   Each entry is [word, decoy]: two things whose clues genuinely overlap, so a
-   decoy-mode imposter blends in instead of getting nonsense. The game randomly
-   decides which side is real each round. */
+/* ============ CONTENT — 19 categories in themed clusters ============
+   Each category is a list of CLUSTERS: 4-6 words that live in the same clue
+   space (landmarks, street food, big cats...). The decoy is a DIFFERENT word
+   from the same cluster — related enough that the imposter's clues sound
+   plausible, distinct enough that sharp clues expose them. */
 const CATEGORIES = {
-  'Food': [['Pizza','Calzone'],['Cheeseburger','Hot dog'],['Sushi','Ramen'],['Tacos','Burrito'],['Biryani','Fried rice'],['Shawarma','Kebab'],['Pancakes','Waffles'],['Mac and cheese','Grilled cheese'],['French fries','Onion rings'],['Dumplings','Spring rolls'],['Fried chicken','Chicken wings'],['Steak','BBQ ribs']],
-  'Desserts & Snacks': [['Ice cream','Milkshake'],['Chocolate cake','Brownie'],['Donut','Cinnamon roll'],['Popcorn','Chips'],['Cheesecake','Tiramisu'],['Cookies','Cupcakes'],['Churros','Pretzel'],['Baklava','Kunafa'],['Gulab jamun','Jalebi'],['Gummy bears','Sour candy'],['Slushie','Smoothie'],['Candy apple','Cotton candy']],
-  'Animals': [['Elephant','Rhino'],['Penguin','Seal'],['Shark','Dolphin'],['Kangaroo','Koala'],['Octopus','Jellyfish'],['Giraffe','Zebra'],['Eagle','Hawk'],['Snake','Crocodile'],['Panda','Polar bear'],['Camel','Donkey'],['Tiger','Cheetah'],['Wolf','Fox'],['Flamingo','Peacock'],['Hamster','Guinea pig'],['Raccoon','Skunk'],['Gorilla','Orangutan']],
-  'Places': [['Beach','Swimming pool'],['Airport','Train station'],['Hospital','Pharmacy'],['Library','Bookstore'],['Gym','Boxing ring'],['Barbershop','Hair salon'],['Movie theater','Drive-in'],['Gas station','Rest stop'],['Amusement park','Carnival'],['Courtroom','Police station'],['Desert','Canyon'],['Stadium','Arena'],['Museum','Art gallery'],['Farm','Ranch'],['Casino','Arcade'],['Graveyard','Haunted house']],
-  'NYC Life': [['Bodega','Deli'],['Subway rat','Pigeon'],['Times Square','Empire State Building'],['Halal cart','Food truck'],['Yellow cab','Uber'],['Brooklyn Bridge','Statue of Liberty'],['Central Park','Coney Island'],['Dollar pizza','Chopped cheese'],['Fire escape','Rooftop'],['Street performer','Subway dancer'],['Traffic jam','Road work'],['Rent','Parking ticket'],['Tourist','Influencer'],['MetroCard','Transit app']],
-  'Desi Vibes': [['Biryani','Pulao'],['Chai','Lassi'],['Rickshaw','Motorcycle'],['Shaadi','Mehndi'],['Eidi','Pocket money'],['Aunty gossip','Rishta talk'],['Cricket match','Kite flying'],['Samosa','Pakora'],['Loadshedding','Slow wifi'],['Nihari','Haleem'],['Gol gappay','Dahi bhalla'],['Dhaba','Street food stall'],['Bollywood','Lollywood'],['Salwar kameez','Kurta'],['Mango season','Summer vacation'],['Qawwali','Ghazal']],
-  'Sports': [['Basketball','Volleyball'],['Cricket','Baseball'],['Boxing','MMA'],['Swimming','Diving'],['Golf','Mini golf'],['Tennis','Badminton'],['Skateboarding','Rollerblading'],['Wrestling','Judo'],['Archery','Darts'],['Bowling','Curling'],['Rock climbing','Parkour'],['Ping pong','Pickleball'],['Karate','Taekwondo'],['Skiing','Snowboarding'],['Formula 1','NASCAR'],['Marathon','Triathlon']],
-  'Movies & TV': [['Titanic','The Notebook'],['Breaking Bad','Peaky Blinders'],['Squid Game','Money Heist'],['Harry Potter','Lord of the Rings'],['Star Wars','Star Trek'],['The Office','Friends'],['Shrek','Kung Fu Panda'],['Frozen','Moana'],['Stranger Things','Wednesday'],['Toy Story','Despicable Me'],['Jurassic Park','Godzilla'],['Avatar','Interstellar'],['Mr. Bean','Home Alone'],['The Lion King','Madagascar'],['Fast and Furious','Mission Impossible'],['John Wick','James Bond'],['The Godfather','Scarface']],
-  'Cartoons & Anime': [['SpongeBob','Patrick'],['Naruto','Sasuke'],['Goku','Vegeta'],['Pikachu','Sonic'],['Tom and Jerry','Oggy and the Cockroaches'],['Ben 10','Danny Phantom'],['Phineas and Ferb','Gravity Falls'],['Scooby-Doo','Courage'],['Bugs Bunny','Mickey Mouse'],['Homer Simpson','Peter Griffin'],['Dora','Diego'],['Luffy','Zoro'],['Gojo','Levi'],['Mr. Krabs','Squidward'],['Doraemon','Shinchan'],['Deku','Tanjiro']],
-  'Video Games': [['Minecraft','Roblox'],['Fortnite','Call of Duty'],['GTA','Red Dead Redemption'],['Among Us','Fall Guys'],['Mario','Sonic the Hedgehog'],['Pac-Man','Tetris'],['Clash of Clans','Clash Royale'],['Subway Surfers','Temple Run'],['NBA 2K','FIFA'],['Valorant','Overwatch'],['God of War','Elden Ring'],['Zelda','Pokemon'],['Candy Crush','Angry Birds'],['Wii Sports','Just Dance']],
-  'Brands': [['Nike','Adidas'],['Apple','Samsung'],['McDonalds','Burger King'],['Amazon','eBay'],['Tesla','BMW'],['Gucci','Louis Vuitton'],['IKEA','Home Depot'],['Costco','Walmart'],['Shein','Zara'],['Starbucks','Dunkin'],['Lego','Hot Wheels'],['Coca-Cola','Pepsi'],['PlayStation','Xbox'],['Red Bull','Monster'],['Rolex','Cartier'],['Supreme','Off-White']],
-  'Apps & Websites': [['TikTok','YouTube Shorts'],['Instagram','Snapchat'],['YouTube','Twitch'],['WhatsApp','Telegram'],['Discord','Slack'],['Spotify','SoundCloud'],['Uber Eats','DoorDash'],['Zoom','FaceTime'],['Google Maps','Waze'],['Netflix','Hulu'],['Gmail','Outlook'],['Duolingo','Google Translate'],['Reddit','Twitter'],['Venmo','Cash App'],['ChatGPT','Siri'],['Amazon','Temu']],
-  'Famous People': [['Michael Jackson','Bruno Mars'],['Messi','Ronaldo'],['Einstein','Newton'],['MrBeast','PewDiePie'],['Taylor Swift','Ariana Grande'],['Muhammad Ali','Mike Tyson'],['Elon Musk','Jeff Bezos'],['The Rock','John Cena'],['Drake','Travis Scott'],['LeBron James','Stephen Curry'],['Kanye West','Kendrick Lamar'],['Gordon Ramsay','Salt Bae'],['Keanu Reeves','Tom Cruise'],['Bruce Lee','Jackie Chan'],['Usain Bolt','Michael Phelps'],['Steve Jobs','Bill Gates'],['Rihanna','Beyonce'],['Morgan Freeman','Samuel L. Jackson']],
-  'Superheroes & Villains': [['Batman','Iron Man'],['Superman','Thor'],['Spider-Man','Ant-Man'],['Thanos','Darkseid'],['Joker','Green Goblin'],['Hulk','The Thing'],['Venom','Carnage'],['Deadpool','Wolverine'],['Wonder Woman','Captain Marvel'],['The Flash','Quicksilver'],['Doctor Strange','Loki'],['Captain America','Black Panther'],['Harley Quinn','Catwoman']],
-  'Everyday Objects': [['Toothbrush','Hairbrush'],['Umbrella','Raincoat'],['Charger cable','Power bank'],['Scissors','Nail clipper'],['Pillow','Blanket'],['Backpack','Suitcase'],['Deodorant','Perfume'],['Stapler','Paper clip'],['Candle','Flashlight'],['Wallet','Purse'],['Headphones','Speaker'],['Blender','Juicer'],['Remote control','Game controller'],['Ladder','Step stool'],['Vacuum','Broom'],['Sunglasses','Reading glasses'],['Microwave','Air fryer'],['Fan','AC'],['Water bottle','Thermos'],['Extension cord','Power strip']],
-  'Jobs': [['Dentist','Surgeon'],['Pilot','Flight attendant'],['Barber','Hairdresser'],['Firefighter','Police officer'],['Uber driver','Taxi driver'],['Imam','Teacher'],['Mechanic','Electrician'],['Chef','Baker'],['Lifeguard','Security guard'],['Lawyer','Judge'],['Plumber','Handyman'],['Astronaut','Scientist'],['DJ','Radio host'],['Mailman','Amazon driver'],['Referee','Coach'],['Butcher','Farmer'],['Magician','Clown'],['Bodyguard','Bouncer']],
-  'Habits & Actions': [['Snoring','Talking in your sleep'],['Ghosting','Leaving on read'],['Oversleeping','Hitting snooze'],['Doomscrolling','Binge watching'],['Gym selfie','Flexing'],['Backseat driving','Road rage'],['Loud chewing','Slurping'],['Nail biting','Knuckle cracking'],['Procrastinating','Cramming for exams'],['Photobombing','Interrupting'],['Humble bragging','Oversharing'],['Jaywalking','Cutting in line'],['Daydreaming','Zoning out'],['People watching','Window shopping']],
-  'Feelings & Situations': [['Stage fright','Butterflies'],['Job interview','First day of school'],['Food coma','Sugar rush'],['Airport rush','Running late'],['Deja vu','A weird dream'],['Awkward silence','Small talk'],['Group project','Study group'],['All-nighter','Jet lag'],['Brain freeze','Hiccups'],['Stuck in an elevator','Traffic jam'],['Wrong number text','Butt dial'],['Bad haircut','Cracked phone screen'],['FOMO','Jealousy'],['Beginners luck','Karma']],
+  'General': [
+    ['Sun','Moon','Rainbow','Lightning','Snow'],
+    ['Birthday','Wedding','Eid','New Year','Graduation'],
+    ['Homework','Exam','Recess','Detention','Field trip'],
+    ['Cash','Credit card','Piggy bank','Lottery','Allowance'],
+    ['Morning','Midnight','Weekend','Summer','Monday'],
+  ],
+  'Food': [
+    ['Pizza','Pasta','Lasagna','Garlic bread'],
+    ['Cheeseburger','Hot dog','Fried chicken','French fries','Nachos'],
+    ['Sushi','Ramen','Dumplings','Fried rice','Spring rolls'],
+    ['Biryani','Shawarma','Kebab','Butter chicken'],
+    ['Pancakes','Waffles','Omelette','Cereal','French toast'],
+  ],
+  'Desserts & Snacks': [
+    ['Ice cream','Milkshake','Slushie','Smoothie','Frozen yogurt'],
+    ['Chocolate cake','Brownie','Donut','Cinnamon roll','Cheesecake'],
+    ['Popcorn','Chips','Pretzel','Gummy bears','Cotton candy'],
+    ['Baklava','Kunafa','Gulab jamun','Jalebi','Halwa'],
+  ],
+  'Animals': [
+    ['Elephant','Giraffe','Zebra','Rhino','Hippo'],
+    ['Tiger','Cheetah','Wolf','Fox','Bear'],
+    ['Shark','Dolphin','Whale','Octopus','Jellyfish','Seal'],
+    ['Eagle','Owl','Flamingo','Peacock','Penguin','Parrot'],
+    ['Hamster','Guinea pig','Rabbit','Turtle','Goldfish'],
+  ],
+  'Places': [
+    ['Airport','Train station','Hotel','Cruise ship'],
+    ['Amusement park','Carnival','Arcade','Movie theater','Bowling alley'],
+    ['Beach','Desert','Waterfall','Canyon','Forest'],
+    ['Hospital','Courtroom','Police station','Bank','Library'],
+    ['Mall','Gym','Barbershop','Cafe','Masjid'],
+  ],
+  'NYC Life': [
+    ['Times Square','Empire State Building','Brooklyn Bridge','Statue of Liberty','Central Park','Coney Island'],
+    ['Dollar pizza','Chopped cheese','Halal cart','Bodega','Food truck'],
+    ['Yellow cab','Subway','Ferry','CitiBike'],
+    ['Rent','Parking ticket','Traffic jam','Rush hour'],
+    ['Subway rat','Pigeon','Tourist','Street performer'],
+  ],
+  'Desi Vibes': [
+    ['Biryani','Nihari','Haleem','Samosa','Gol gappay'],
+    ['Chai','Lassi','Falooda','Kheer'],
+    ['Shaadi','Mehndi','Baraat','Walima','Dholki'],
+    ['Aunty gossip','Rishta talk','Desi parents','Eidi','Loadshedding'],
+    ['Salwar kameez','Kurta','Bollywood','Qawwali'],
+  ],
+  'Sports': [
+    ['Basketball','Soccer','Volleyball','Baseball','Cricket'],
+    ['Boxing','MMA','Wrestling','Karate','Judo'],
+    ['Tennis','Badminton','Ping pong','Golf','Darts','Bowling'],
+    ['Skateboarding','Surfing','Skiing','Snowboarding','Rock climbing'],
+    ['Formula 1','NASCAR','Marathon','Triathlon','Swimming'],
+  ],
+  'Movies & TV': [
+    ['Breaking Bad','Money Heist','Peaky Blinders','Squid Game','Narcos'],
+    ['Harry Potter','Star Wars','Lord of the Rings','Interstellar','Avatar'],
+    ['Shrek','Frozen','Toy Story','The Lion King','Kung Fu Panda','Moana'],
+    ['Fast and Furious','John Wick','Mission Impossible','James Bond','The Dark Knight'],
+    ['The Office','Friends','Mr. Bean','Home Alone','Brooklyn Nine-Nine'],
+  ],
+  'Cartoons & Anime': [
+    ['Naruto','Goku','Luffy','Deku','Tanjiro'],
+    ['Sasuke','Vegeta','Zoro','Gojo','Levi','Itachi'],
+    ['SpongeBob','Tom and Jerry','Scooby-Doo','Ben 10','Phineas and Ferb','Doraemon'],
+    ['Patrick','Mr. Krabs','Homer Simpson','Peter Griffin','Bugs Bunny','Pikachu'],
+  ],
+  'Video Games': [
+    ['Minecraft','Roblox','Fortnite','Among Us','Fall Guys'],
+    ['Call of Duty','Valorant','Overwatch','Halo'],
+    ['Subway Surfers','Temple Run','Candy Crush','Angry Birds','Clash of Clans'],
+    ['GTA','Red Dead Redemption','God of War','Elden Ring','Zelda'],
+    ['Mario','Sonic the Hedgehog','Pac-Man','Tetris','Wii Sports'],
+  ],
+  'Brands': [
+    ['Nike','Adidas','Gucci','Supreme','Shein'],
+    ['Apple','Samsung','Tesla','PlayStation','Xbox'],
+    ['McDonalds','Burger King','Starbucks','Dunkin','Chick-fil-A'],
+    ['Coca-Cola','Pepsi','Red Bull','Monster','Gatorade'],
+    ['Amazon','eBay','Costco','Walmart','Target','IKEA'],
+  ],
+  'Apps & Websites': [
+    ['TikTok','Instagram','Snapchat','Twitter','Reddit'],
+    ['WhatsApp','Telegram','Discord','Zoom','FaceTime'],
+    ['YouTube','Netflix','Twitch','Spotify','Hulu'],
+    ['Uber Eats','DoorDash','Amazon','Temu','Venmo'],
+    ['Google Maps','Waze','Duolingo','ChatGPT','Siri'],
+  ],
+  'Famous People': [
+    ['Messi','Ronaldo','LeBron James','Stephen Curry','Usain Bolt','Muhammad Ali'],
+    ['Drake','Travis Scott','Kanye West','Taylor Swift','Rihanna','Michael Jackson'],
+    ['MrBeast','PewDiePie','Elon Musk','Jeff Bezos','Steve Jobs','Bill Gates'],
+    ['The Rock','John Cena','Keanu Reeves','Tom Cruise','Jackie Chan','Gordon Ramsay'],
+  ],
+  'Superheroes & Villains': [
+    ['Batman','Iron Man','Black Panther','Doctor Strange'],
+    ['Superman','Thor','Hulk','Wonder Woman','Captain Marvel'],
+    ['Spider-Man','Deadpool','Wolverine','The Flash','Ant-Man'],
+    ['Thanos','Joker','Venom','Loki','Green Goblin','Harley Quinn'],
+  ],
+  'Everyday Objects': [
+    ['Toothbrush','Hairbrush','Deodorant','Nail clipper','Towel'],
+    ['Microwave','Air fryer','Blender','Water bottle','Thermos'],
+    ['Charger cable','Power bank','Headphones','Remote control','Extension cord'],
+    ['Wallet','Backpack','Umbrella','Sunglasses','Keychain','Suitcase'],
+    ['Pillow','Candle','Fan','Vacuum','Ladder','Flashlight'],
+  ],
+  'Jobs': [
+    ['Dentist','Surgeon','Firefighter','Police officer','Lifeguard','Nurse'],
+    ['Pilot','Uber driver','Mailman','Amazon driver','Flight attendant'],
+    ['Mechanic','Electrician','Plumber','Barber','Butcher'],
+    ['Lawyer','Judge','Imam','Teacher','Referee'],
+    ['DJ','Magician','Clown','Radio host','Bouncer'],
+  ],
+  'Habits & Actions': [
+    ['Snoring','Talking in your sleep','Oversleeping','Hitting snooze'],
+    ['Doomscrolling','Ghosting','Leaving on read','Oversharing','Binge watching'],
+    ['Loud chewing','Slurping','Interrupting','Backseat driving','Cutting in line'],
+    ['Nail biting','Knuckle cracking','Daydreaming','Zoning out','Procrastinating'],
+  ],
+  'Feelings & Situations': [
+    ['Stage fright','Butterflies','Job interview','First day of school'],
+    ['Food coma','Sugar rush','Brain freeze','Hiccups','Jet lag','All-nighter'],
+    ['Awkward silence','Small talk','Wrong number text','Butt dial','Bad haircut'],
+    ['FOMO','Karma','Beginners luck','Deja vu','Running late','Stuck in an elevator'],
+  ],
 };
 
 /* Question pairs: [crew question, imposter question] — answers share a shape
@@ -569,12 +679,15 @@ function startRound() {
       ? catNames[Math.floor(Math.random() * catNames.length)]
       : state.category;
     round.category = cat;
-    const pairs = CATEGORIES[cat];
-    const pair = pairs[Math.floor(Math.random() * pairs.length)];
-    // Each pair is hand-matched; randomize which side is the real word.
-    const flip = Math.random() < 0.5;
-    round.word = flip ? pair[0] : pair[1];
-    round.decoy = flip ? pair[1] : pair[0];
+    // Pick a themed cluster, then two different words from it: related enough
+    // to bluff with, distinct enough that sharp clues expose the imposter.
+    const clusters = CATEGORIES[cat];
+    const cluster = clusters[Math.floor(Math.random() * clusters.length)];
+    const wi = Math.floor(Math.random() * cluster.length);
+    let di = Math.floor(Math.random() * (cluster.length - 1));
+    if (di >= wi) di += 1;
+    round.word = cluster[wi];
+    round.decoy = cluster[di];
   } else {
     const pair = QUESTION_PAIRS[Math.floor(Math.random() * QUESTION_PAIRS.length)];
     const flip = Math.random() < 0.5;
