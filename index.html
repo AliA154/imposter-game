@@ -6,14 +6,17 @@
 <title>IMPOSTER — Case Files</title>
 <style>
   :root {
-    --ink: #101014;
-    --panel: #1a1b21;
+    --ink: #0e0e13;
+    --panel: #191a21;
     --panel-2: #22242c;
     --line: #33353f;
     --paper: #ece7da;
+    --paper-2: #e2dbc8;
     --paper-ink: #23211b;
     --red: #e5484d;
+    --red-dim: #a53237;
     --green: #4cc38a;
+    --gold: #d9b45b;
     --tan: #9a917c;
     --text: #e8e6df;
     --display: "Avenir Next Condensed", "Futura", "Arial Narrow", sans-serif;
@@ -23,38 +26,61 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
   body {
-    background: var(--ink);
+    background: radial-gradient(120% 90% at 50% 0%, #16171f 0%, var(--ink) 55%);
     color: var(--text);
     font-family: var(--body);
     overscroll-behavior: none;
     -webkit-user-select: none;
     user-select: none;
   }
-  #app { max-width: 460px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; padding: 18px 18px 28px; }
+  /* film grain + vignette atmosphere */
+  body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 50;
+    background-image:
+      radial-gradient(160% 110% at 50% 45%, transparent 60%, rgba(0,0,0,.55) 100%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,.03) 0 1px, transparent 1px 4px);
+  }
+  #app { max-width: 460px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; padding: 18px 18px 28px; position: relative; }
   .screen { display: none; flex: 1; flex-direction: column; }
-  .screen.on { display: flex; }
+  .screen.on { display: flex; animation: screenIn .28s ease both; }
+  @keyframes screenIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
   .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .22em; color: var(--tan); text-transform: uppercase; }
-  h1 { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: 44px; line-height: 1; margin: 6px 0 2px; }
+  h1 { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: 52px; line-height: 1; margin: 6px 0 2px; }
   h1 .red { color: var(--red); }
   h2 { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 24px; }
   .sub { color: var(--tan); font-size: 14px; margin-top: 6px; line-height: 1.45; }
+
+  .tape {
+    display: inline-block; margin-top: 10px; padding: 5px 14px; transform: rotate(-2deg);
+    background: var(--gold); color: #2a2313; font-family: var(--mono); font-size: 10px; letter-spacing: .28em;
+    text-transform: uppercase; border-radius: 2px; box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  }
 
   .btn {
     display: block; width: 100%; border: 1px solid var(--line); background: var(--panel);
     color: var(--text); font-family: var(--display); text-transform: uppercase; letter-spacing: .08em;
     font-size: 19px; font-weight: 600; padding: 16px; border-radius: 10px; cursor: pointer; text-align: center;
+    transition: transform .08s ease, box-shadow .15s ease;
   }
   .btn:active { transform: scale(.985); }
-  .btn.primary { background: var(--red); border-color: var(--red); color: #fff; }
-  .btn.primary:disabled { background: var(--panel); border-color: var(--line); color: var(--tan); }
+  .btn.primary { background: linear-gradient(180deg, #ee565b, var(--red)); border-color: var(--red); color: #fff; box-shadow: 0 6px 20px rgba(229,72,77,.25); }
+  .btn.primary:disabled { background: var(--panel); border-color: var(--line); color: var(--tan); box-shadow: none; }
   .btn.ghost { background: transparent; }
   .btn.small { font-size: 15px; padding: 11px; width: auto; }
   .btn:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
   .stack { display: flex; flex-direction: column; gap: 12px; }
   .row { display: flex; gap: 10px; align-items: center; }
 
-  .mode-card { border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 18px; cursor: pointer; }
+  .mode-card {
+    position: relative; border: 1px solid var(--line); background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border-radius: 14px; padding: 18px; cursor: pointer; overflow: hidden; transition: transform .08s ease, border-color .15s ease;
+  }
+  .mode-card::before {
+    content: ""; position: absolute; top: 0; right: 0; width: 44px; height: 44px;
+    background: linear-gradient(225deg, var(--red-dim) 48%, transparent 50%);
+  }
   .mode-card:active { transform: scale(.985); }
   .mode-card .tag { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; color: var(--red); }
   .mode-card h2 { margin: 4px 0 6px; }
@@ -64,9 +90,10 @@
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
   .chip {
     border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 999px;
-    padding: 9px 14px; font-size: 14px; cursor: pointer; font-family: var(--body);
+    padding: 9px 14px; font-size: 14px; cursor: pointer; font-family: var(--body); transition: border-color .15s ease;
   }
   .chip.on { background: var(--red); border-color: var(--red); color: #fff; }
+  .chip.gold.on { background: var(--gold); border-color: var(--gold); color: #241d0d; }
   .players { display: flex; flex-direction: column; gap: 8px; }
   .player-row { display: flex; gap: 8px; }
   .player-row input {
@@ -79,36 +106,44 @@
   .stepper { display: flex; align-items: center; gap: 14px; }
   .stepper button { width: 46px; height: 46px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-size: 22px; cursor: pointer; }
   .stepper .val { font-family: var(--display); font-size: 26px; min-width: 34px; text-align: center; }
+  .hint-desc { font-size: 12.5px; color: var(--tan); margin-top: 8px; line-height: 1.45; min-height: 34px; }
 
-  /* Dossier reveal card */
-  .pass-name { text-align: center; margin: 26px 0 10px; }
+  /* ============ Dossier card with 3D flip ============ */
+  .pass-name { text-align: center; margin: 22px 0 8px; }
   .pass-name .who { font-family: var(--display); font-size: 40px; text-transform: uppercase; letter-spacing: .04em; }
+  .card-zone { perspective: 1200px; width: 100%; max-width: 340px; margin: 10px auto; }
   .card {
-    position: relative; margin: 10px auto; width: 100%; max-width: 340px; aspect-ratio: 3 / 4.1;
-    border-radius: 12px; background: var(--paper); color: var(--paper-ink);
+    position: relative; width: 100%; aspect-ratio: 3 / 4.1; cursor: pointer;
+    transform-style: preserve-3d; transition: transform .55s cubic-bezier(.4,.9,.35,1);
+  }
+  .card.open { transform: rotateY(180deg); }
+  .card .face {
+    position: absolute; inset: 0; border-radius: 12px; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    background: var(--paper); color: var(--paper-ink);
     box-shadow: 0 18px 40px rgba(0,0,0,.5), inset 0 0 0 1px rgba(0,0,0,.15);
-    display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px; text-align: center; overflow: hidden;
     background-image: repeating-linear-gradient(0deg, transparent 0 26px, rgba(0,0,0,.035) 26px 27px);
   }
-  .card .face { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px; text-align: center; }
-  .card .cover-stamp {
+  .card .face.back { transform: rotateY(180deg); background-color: var(--paper-2); }
+  .cover-stamp {
     border: 4px solid var(--red); color: var(--red); font-family: var(--display); font-weight: 700;
     text-transform: uppercase; letter-spacing: .18em; font-size: 30px; padding: 10px 22px; transform: rotate(-8deg); border-radius: 4px;
   }
   .card .hint { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #6d675a; margin-top: 26px; }
   .card .file-no { position: absolute; top: 14px; left: 16px; font-family: var(--mono); font-size: 10px; letter-spacing: .18em; color: #6d675a; }
-  .card .secret { display: none; }
-  .card.open .secret { display: flex; }
-  .card.open .cover { display: none; }
-  .secret .cat { font-family: var(--mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #6d675a; margin-bottom: 12px; }
-  .secret .word { font-family: var(--display); font-weight: 700; font-size: 42px; line-height: 1.05; text-transform: uppercase; letter-spacing: .02em; text-wrap: balance; }
-  .secret .word.qtext { font-size: 21px; line-height: 1.4; font-family: var(--body); font-weight: 600; text-transform: none; letter-spacing: 0; }
-  .secret.imposter .word:not(.qtext) { color: var(--red); transform: rotate(-6deg); border: 5px solid var(--red); padding: 12px 18px; border-radius: 6px; }
-  .secret .note { margin-top: 18px; font-size: 13px; color: #6d675a; line-height: 1.4; }
+  .secret-cat { font-family: var(--mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #6d675a; margin-bottom: 12px; }
+  .secret-word { font-family: var(--display); font-weight: 700; font-size: 40px; line-height: 1.05; text-transform: uppercase; letter-spacing: .02em; text-wrap: balance; }
+  .card.open .secret-word.stampable { animation: stampIn .35s .3s cubic-bezier(.2,1.4,.4,1) both; }
+  @keyframes stampIn { from { opacity: 0; transform: scale(1.7) rotate(-2deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+  .secret-word.qtext { font-size: 21px; line-height: 1.4; font-family: var(--body); font-weight: 600; text-transform: none; letter-spacing: 0; }
+  .secret-word.imp-stamp { color: var(--red); transform: rotate(-6deg); border: 5px solid var(--red); padding: 12px 18px; border-radius: 6px; }
+  .secret-note { margin-top: 18px; font-size: 13px; color: #6d675a; line-height: 1.45; }
+  .secret-note strong { color: var(--red-dim); }
 
   .center { text-align: center; }
   .big-num { font-family: var(--display); font-size: 76px; font-weight: 700; line-height: 1; }
-  .timer.warn { color: var(--red); }
+  .timer.warn { color: var(--red); animation: pulse 1s ease infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
 
   .vote-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
   .vote-row { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 12px 14px; }
@@ -118,15 +153,19 @@
 
   .result-stamp {
     margin: 18px auto 6px; width: fit-content; border: 5px solid; border-radius: 6px; padding: 10px 20px;
-    font-family: var(--display); font-weight: 700; font-size: 34px; text-transform: uppercase; letter-spacing: .1em; transform: rotate(-5deg);
+    font-family: var(--display); font-weight: 700; font-size: 34px; text-transform: uppercase; letter-spacing: .1em;
+    animation: stampIn .4s cubic-bezier(.2,1.4,.4,1) both; transform-origin: center;
   }
-  .result-stamp.caught { border-color: var(--green); color: var(--green); }
-  .result-stamp.escaped { border-color: var(--red); color: var(--red); }
+  .result-stamp.caught { border-color: var(--green); color: var(--green); rotate: -5deg; }
+  .result-stamp.escaped { border-color: var(--red); color: var(--red); rotate: -5deg; }
   .reveal-list { margin-top: 16px; border-top: 1px solid var(--line); }
   .reveal-list .r { display: flex; justify-content: space-between; gap: 12px; padding: 11px 2px; border-bottom: 1px solid var(--line); font-size: 15px; }
   .reveal-list .r .who { font-weight: 600; }
   .reveal-list .r .role { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--tan); text-align: right; }
   .reveal-list .r .role.imp { color: var(--red); }
+  .scoreboard { margin-top: 20px; }
+  .scoreboard .sb-title { font-family: var(--mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+  .scoreboard .r .role { color: var(--gold); }
 
   footer.nav { margin-top: auto; padding-top: 22px; display: flex; gap: 10px; }
   footer.nav .btn.primary { flex: 1; }
@@ -141,13 +180,14 @@
     <div>
       <div class="eyebrow">Case Files · Party Deduction</div>
       <h1>IMPO<span class="red">STER</span></h1>
-      <p class="sub">Pass one phone around. Everyone gets the secret — except the imposter. Talk, bluff, vote.</p>
+      <span class="tape">Top secret · eyes only</span>
+      <p class="sub" style="margin-top:14px;">Pass one phone around. Everyone gets the secret — except the imposter. Talk, bluff, vote.</p>
     </div>
-    <div class="stack" style="margin-top:26px;">
+    <div class="stack" style="margin-top:24px;">
       <div class="mode-card" onclick="chooseMode('word')">
         <div class="tag">MODE 01</div>
         <h2>Word Imposter</h2>
-        <p>Everyone sees the same secret word. The imposter sees nothing. Each player gives a one-word clue — vague enough to hide it from the imposter, clear enough to prove you know it.</p>
+        <p>Everyone sees the same secret word — the imposter doesn't. Clues go around the circle: vague enough to starve the imposter, sharp enough to prove you're clean.</p>
       </div>
       <div class="mode-card" onclick="chooseMode('question')">
         <div class="tag">MODE 02</div>
@@ -155,7 +195,7 @@
         <p>Everyone answers the same question out loud — but the imposter secretly got a <em>different</em> question. Whose answer doesn't add up?</p>
       </div>
     </div>
-    <footer class="nav"><div class="sub" style="margin:0 auto;">for the crew · no accounts, no internet</div></footer>
+    <footer class="nav"><div class="sub" style="margin:0 auto;">18 categories · double agent mode · season scoreboard</div></footer>
   </section>
 
   <!-- ============ SETUP ============ -->
@@ -167,6 +207,7 @@
     <div class="players" id="player-list"></div>
     <div class="row" style="margin-top:8px;">
       <button class="btn small ghost" onclick="addPlayer()">+ Add player</button>
+      <button class="btn small ghost" onclick="resetScores()">Reset scores</button>
     </div>
 
     <div id="cat-block">
@@ -183,10 +224,20 @@
     </div>
 
     <div id="hint-block">
-      <div class="field-label">Imposter sees the category?</div>
+      <div class="field-label">Imposter's intel</div>
       <div class="chips">
-        <button class="chip" id="hint-yes" onclick="setHint(true)">Yes — fair fight</button>
-        <button class="chip" id="hint-no" onclick="setHint(false)">No — hard mode</button>
+        <button class="chip" id="intel-none" onclick="setIntel('none')">Nothing</button>
+        <button class="chip" id="intel-category" onclick="setIntel('category')">Category</button>
+        <button class="chip" id="intel-decoy" onclick="setIntel('decoy')">Decoy word</button>
+      </div>
+      <div class="hint-desc" id="intel-desc"></div>
+      <div id="blind-block" style="display:none;">
+        <div class="field-label">Double agent</div>
+        <div class="chips">
+          <button class="chip gold" id="blind-off" onclick="setBlind(false)">Off — imposter knows</button>
+          <button class="chip gold" id="blind-on" onclick="setBlind(true)">On — nobody knows</button>
+        </div>
+        <div class="hint-desc" id="blind-desc"></div>
       </div>
     </div>
 
@@ -203,16 +254,18 @@
       <div class="sub" style="margin-bottom:2px;">Pass the phone to</div>
       <div class="who" id="reveal-who"></div>
     </div>
-    <div class="card" id="card" onclick="toggleCard()">
-      <div class="file-no" id="file-no"></div>
-      <div class="face cover">
-        <div class="cover-stamp">Classified</div>
-        <div class="hint">Tap to open · tap again to seal</div>
-      </div>
-      <div class="face secret" id="secret-face">
-        <div class="cat" id="secret-cat"></div>
-        <div class="word" id="secret-word"></div>
-        <div class="note" id="secret-note"></div>
+    <div class="card-zone">
+      <div class="card" id="card" onclick="toggleCard()">
+        <div class="face front">
+          <div class="file-no" id="file-no"></div>
+          <div class="cover-stamp">Classified</div>
+          <div class="hint">Tap to open · tap again to seal</div>
+        </div>
+        <div class="face back">
+          <div class="secret-cat" id="secret-cat"></div>
+          <div class="secret-word stampable" id="secret-word"></div>
+          <div class="secret-note" id="secret-note"></div>
+        </div>
       </div>
     </div>
     <footer class="nav">
@@ -257,13 +310,14 @@
     <div class="result-stamp" id="result-stamp"></div>
     <p class="sub center" id="result-line"></p>
     <div class="center" id="steal-block" style="display:none; margin-top:16px;">
-      <p class="sub">Imposter — one shot to steal the win. What was the word?</p>
+      <p class="sub">Imposter — one shot to steal the win. What was the real word?</p>
       <div class="row" style="justify-content:center; margin-top:10px; gap:8px;">
         <button class="btn small" onclick="stealResult(true)">Guessed it</button>
         <button class="btn small ghost" onclick="stealResult(false)">Blew it</button>
       </div>
     </div>
     <div class="reveal-list" id="reveal-list"></div>
+    <div class="scoreboard" id="scoreboard"></div>
     <footer class="nav">
       <button class="btn ghost small" onclick="show('s-setup'); syncSetup();">Change setup</button>
       <button class="btn primary" onclick="startRound()">Same crew, new round</button>
@@ -274,16 +328,26 @@
 <script>
 'use strict';
 
-/* ============ CONTENT ============ */
+/* ============ CONTENT — 18 categories ============ */
 const CATEGORIES = {
-  'Food': ['Pizza','Sushi','Tacos','Biryani','Pancakes','Cheeseburger','Ramen','Ice cream','Shawarma','Butter chicken','Hot dog','Mac and cheese','French fries','Chocolate cake','Dumplings','Fried chicken','Pasta','Steak','Cereal','Popcorn','Donut','Grilled cheese','Nachos','Waffles','Smoothie','Kebab'],
-  'Animals': ['Elephant','Penguin','Shark','Kangaroo','Octopus','Giraffe','Eagle','Snake','Panda','Camel','Dolphin','Owl','Tiger','Gorilla','Flamingo','Crocodile','Wolf','Peacock','Hamster','Jellyfish','Horse','Bat','Lobster','Cheetah','Goat','Raccoon'],
-  'Places': ['Beach','Airport','Hospital','Masjid','Library','Gym','Barbershop','Movie theater','Gas station','Rooftop','Amusement park','Courtroom','Subway station','Desert','Waterfall','Stadium','Museum','Farm','Casino','Graveyard','Ski resort','Aquarium','Prison','Space station','Mall','Campsite'],
-  'Sports': ['Basketball','Cricket','Boxing','Swimming','Golf','Tennis','Skateboarding','Wrestling','Archery','Bowling','Soccer','Baseball','Rock climbing','Fencing','Ping pong','Karate','Skiing','Surfing','Chess','Darts','Volleyball','Formula 1','Gymnastics','Hockey','Badminton','Marathon'],
-  'Movies & TV': ['Iron Man','Titanic','Breaking Bad','SpongeBob','Batman','Squid Game','Harry Potter','Star Wars','The Office','Shrek','Spider-Man','Frozen','Stranger Things','Toy Story','Jurassic Park','Avatar','Mr. Bean','Naruto','The Lion King','Fast and Furious','Home Alone','John Wick','Interstellar','Tom and Jerry','Oppenheimer','The Godfather'],
-  'Famous People': ['Michael Jackson','Messi','Einstein','MrBeast','Ronaldo','Taylor Swift','Muhammad Ali','Elon Musk','The Rock','Drake','LeBron James','Kanye West','Gordon Ramsay','Shaq','Mike Tyson','Keanu Reeves','Snoop Dogg','Bruce Lee','Adele','Usain Bolt','Steve Jobs','Zlatan','Rihanna','Bill Gates','Neymar','Morgan Freeman'],
-  'Everyday Objects': ['Toothbrush','Umbrella','Charger cable','Scissors','Pillow','Backpack','Deodorant','Stapler','Mirror','Candle','Wallet','Headphones','Blender','Remote control','Ladder','Vacuum','Sunglasses','Keychain','Microwave','Fan','Water bottle','Lawn mower','Nail clipper','Extension cord','Doorbell','Air fryer'],
-  'Jobs': ['Dentist','Pilot','Barber','Firefighter','Uber driver','Surgeon','Imam','Mechanic','Chef','Lifeguard','Lawyer','Plumber','Teacher','Astronaut','DJ','Mailman','Referee','Butcher','Electrician','Farmer','Magician','Bodyguard','Translator','Tattoo artist','Judge','Janitor'],
+  'Food': ['Pizza','Sushi','Tacos','Biryani','Pancakes','Cheeseburger','Ramen','Shawarma','Butter chicken','Hot dog','Mac and cheese','French fries','Dumplings','Fried chicken','Pasta','Steak','Grilled cheese','Nachos','Waffles','Kebab','Fried rice','Wings'],
+  'Desserts & Snacks': ['Ice cream','Chocolate cake','Donut','Popcorn','Cheesecake','Brownie','Cookies','Cinnamon roll','Churros','Baklava','Gulab jamun','Milkshake','Cupcake','Tiramisu','Gummy bears','Chips','Pretzel','Slushie','Kunafa','Pudding','Trail mix','Candy apple'],
+  'Animals': ['Elephant','Penguin','Shark','Kangaroo','Octopus','Giraffe','Eagle','Snake','Panda','Camel','Dolphin','Owl','Tiger','Gorilla','Flamingo','Crocodile','Wolf','Peacock','Hamster','Jellyfish','Bat','Cheetah','Raccoon','Lobster'],
+  'Places': ['Beach','Airport','Hospital','Masjid','Library','Gym','Barbershop','Movie theater','Gas station','Amusement park','Courtroom','Desert','Waterfall','Stadium','Museum','Farm','Casino','Graveyard','Ski resort','Aquarium','Prison','Space station','Mall','Campsite'],
+  'NYC Life': ['Bodega','Subway rat','Times Square','Halal cart','Yellow cab','MetroCard','Brooklyn Bridge','Central Park','Pigeon','Dollar pizza','Empire State','Fire escape','Chopped cheese','Street performer','Tourist','Rooftop party','Traffic jam','Yankees cap','Deli sandwich','Rent','Skyline','Food truck'],
+  'Desi Vibes': ['Biryani','Chai','Rickshaw','Shaadi','Eidi','Aunty gossip','Cricket match','Mehndi','Samosa','Loadshedding','Desi parents','Chappal','Mango season','Bollywood','Salwar kameez','Nihari','Jummah','Gol gappay','Haleem','Dhaba','Qawwali','Lassi'],
+  'Sports': ['Basketball','Cricket','Boxing','Swimming','Golf','Tennis','Skateboarding','Wrestling','Archery','Bowling','Soccer','Baseball','Rock climbing','Fencing','Ping pong','Karate','Skiing','Surfing','Chess','Darts','Volleyball','Formula 1','Gymnastics','Marathon'],
+  'Movies & TV': ['Titanic','Breaking Bad','Squid Game','Harry Potter','Star Wars','The Office','Shrek','Frozen','Stranger Things','Toy Story','Jurassic Park','Avatar','Mr. Bean','The Lion King','Fast and Furious','Home Alone','John Wick','Interstellar','Oppenheimer','The Godfather','Wednesday','Money Heist'],
+  'Cartoons & Anime': ['SpongeBob','Naruto','Goku','Pikachu','Tom and Jerry','Ben 10','Phineas and Ferb','Scooby-Doo','Bugs Bunny','Homer Simpson','Peter Griffin','Dora','Mickey Mouse','Luffy','Itachi','Gojo','Mr. Krabs','Patrick','Courage','Doraemon','Shinchan','Levi'],
+  'Video Games': ['Minecraft','Fortnite','GTA','Call of Duty','Among Us','Roblox','Mario','Pac-Man','Tetris','Clash of Clans','Subway Surfers','NBA 2K','FIFA','Valorant','God of War','Zelda','Pokemon Go','Candy Crush','Chess.com','Wii Sports','Temple Run','Elden Ring'],
+  'Brands': ['Nike','Apple','McDonalds','Amazon','Tesla','Gucci','Rolex','IKEA','Costco','Shein','Toyota','Samsung','Adidas','Starbucks','Walmart','Lego','Coca-Cola','Supreme','Louis Vuitton','Target','PlayStation','Red Bull'],
+  'Apps & Websites': ['TikTok','Instagram','YouTube','Snapchat','WhatsApp','Discord','Spotify','Uber Eats','DoorDash','Zoom','Google Maps','Netflix','Gmail','Duolingo','Reddit','Twitch','Pinterest','LinkedIn','FaceTime','Venmo','ChatGPT','eBay'],
+  'Famous People': ['Michael Jackson','Messi','Einstein','MrBeast','Ronaldo','Taylor Swift','Muhammad Ali','Elon Musk','The Rock','Drake','LeBron James','Kanye West','Gordon Ramsay','Shaq','Mike Tyson','Keanu Reeves','Snoop Dogg','Bruce Lee','Usain Bolt','Steve Jobs','Rihanna','Morgan Freeman'],
+  'Superheroes & Villains': ['Spider-Man','Batman','Iron Man','Superman','Thanos','Joker','Hulk','Thor','Venom','Deadpool','Wonder Woman','The Flash','Aquaman','Doctor Strange','Loki','Green Goblin','Captain America','Black Panther','Wolverine','Harley Quinn','Groot','Magneto'],
+  'Everyday Objects': ['Toothbrush','Umbrella','Charger cable','Scissors','Pillow','Backpack','Deodorant','Stapler','Mirror','Candle','Wallet','Headphones','Blender','Remote control','Ladder','Vacuum','Sunglasses','Microwave','Fan','Water bottle','Nail clipper','Air fryer','Doorbell','Extension cord'],
+  'Jobs': ['Dentist','Pilot','Barber','Firefighter','Uber driver','Surgeon','Imam','Mechanic','Chef','Lifeguard','Lawyer','Plumber','Teacher','Astronaut','DJ','Mailman','Referee','Butcher','Electrician','Farmer','Magician','Bodyguard','Tattoo artist','Judge'],
+  'Habits & Actions': ['Snoring','Ghosting','Oversleeping','Doomscrolling','Gym selfie','Backseat driving','Loud chewing','Nail biting','Binge watching','Procrastinating','Talking in your sleep','Photobombing','Humble bragging','Jaywalking','Eavesdropping','Daydreaming','Cramming for exams','Oversharing','Interrupting','Road rage','Window shopping','People watching'],
+  'Feelings & Situations': ['Stage fright','Road trip','Job interview','First day of school','Food coma','Airport rush','Deja vu','Awkward silence','Group project','Monday morning','All-nighter','Brain freeze','Stuck in an elevator','Wrong number text','Bad haircut','Sunburn','Jet lag','Butterflies','FOMO','Growing pains','Beginners luck','Karma'],
 };
 
 /* Question pairs: [crew question, imposter question] — answers share a shape
@@ -321,6 +385,18 @@ const QUESTION_PAIRS = [
   ['What would your last meal be?','What meal could you cook right now without a recipe?'],
   ['Name someone in this room you would call to help you move.','Name someone in this room who would cancel last minute.'],
   ['How many kids do you want?','How many countries have you been to?'],
+  ['Out of 10, how patient are you in traffic?','Out of 10, how patient are you with slow walkers?'],
+  ['What is your dream car?','What car do you think is the biggest waste of money?'],
+  ['Name someone in this room who gives the best advice.','Name someone in this room who never follows advice.'],
+  ['How many hours could you last without your phone?','How many hours was your longest gaming or binge session?'],
+  ['What food do you refuse to try?','What food did you hate as a kid but love now?'],
+  ['Out of 10, how likely are you to cry in a sad movie?','Out of 10, how likely are you to laugh at the wrong moment?'],
+  ['Name a place in this city everyone should visit once.','Name a place in this city that is completely overrated.'],
+  ['What emoji do you use the most?','What emoji do you think should not exist?'],
+  ['Name someone in this room who would win a cooking show.','Name someone in this room who could burn cereal.'],
+  ['What is the best pizza topping?','What topping ruins a pizza?'],
+  ['How many all-nighters have you pulled this year?','How many times do you hit snooze?'],
+  ['Name a show you would erase from your memory just to watch again.','Name a show you pretend to have watched.'],
 ];
 
 /* ============ STATE ============ */
@@ -330,13 +406,19 @@ let state = {
   players: ['', '', ''],
   category: 'Random',
   imposters: 1,
-  imposterHint: true,
+  intel: 'decoy',       // 'none' | 'category' | 'decoy'
+  blind: false,          // double agent: imposter doesn't know (decoy only)
+  scores: [0, 0, 0],
 };
 let round = null;
 let timerId = null, timerLeft = 180;
 
 function save() {
-  try { localStorage.setItem(LS_KEY, JSON.stringify({ players: state.players, imposterHint: state.imposterHint })); } catch (err) { /* storage unavailable — fine */ }
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      players: state.players, intel: state.intel, blind: state.blind, scores: state.scores,
+    }));
+  } catch (err) { /* storage unavailable — fine */ }
 }
 function load() {
   try {
@@ -344,8 +426,11 @@ function load() {
     if (!raw) return;
     const data = JSON.parse(raw);
     if (Array.isArray(data.players) && data.players.length >= 3) state.players = data.players;
-    if (typeof data.imposterHint === 'boolean') state.imposterHint = data.imposterHint;
+    if (['none', 'category', 'decoy'].includes(data.intel)) state.intel = data.intel;
+    if (typeof data.blind === 'boolean') state.blind = data.blind;
+    state.scores = Array.isArray(data.scores) ? data.scores : [];
   } catch (err) { /* corrupted save — start fresh */ }
+  while (state.scores.length < state.players.length) state.scores.push(0);
 }
 
 /* ============ NAV ============ */
@@ -362,6 +447,12 @@ function chooseMode(mode) {
 }
 
 /* ============ SETUP ============ */
+const INTEL_DESC = {
+  none: 'Hard mode. The imposter walks in with nothing — pure bluff.',
+  category: 'The imposter knows the category, not the word. Decent footing.',
+  decoy: 'The sweet spot: the imposter gets a DIFFERENT word from the same category. They can bluff convincingly — but their clues will drift just slightly off.',
+};
+
 function syncSetup() {
   document.getElementById('setup-mode-label').textContent =
     state.mode === 'word' ? 'Mode 01 · Word Imposter' : 'Mode 02 · Question Imposter';
@@ -370,7 +461,7 @@ function syncSetup() {
   renderPlayers();
   renderCats();
   renderImp();
-  renderHint();
+  renderIntel();
 }
 
 function renderPlayers() {
@@ -390,7 +481,11 @@ function renderPlayers() {
       x.className = 'x-btn';
       x.textContent = '×';
       x.setAttribute('aria-label', 'Remove player');
-      x.onclick = () => { state.players.splice(i, 1); clampImp(); syncSetup(); save(); };
+      x.onclick = () => {
+        state.players.splice(i, 1);
+        state.scores.splice(i, 1);
+        clampImp(); syncSetup(); save();
+      };
       row.appendChild(x);
     }
     wrap.appendChild(row);
@@ -401,7 +496,13 @@ function renderPlayers() {
 function addPlayer() {
   if (state.players.length >= 12) return;
   state.players.push('');
+  state.scores.push(0);
   syncSetup();
+}
+
+function resetScores() {
+  state.scores = state.players.map(() => 0);
+  save();
 }
 
 function renderCats() {
@@ -426,10 +527,21 @@ function renderImp() {
   clampImp();
   document.getElementById('imp-count').textContent = state.imposters;
 }
-function setHint(v) { state.imposterHint = v; save(); renderHint(); }
-function renderHint() {
-  document.getElementById('hint-yes').classList.toggle('on', state.imposterHint);
-  document.getElementById('hint-no').classList.toggle('on', !state.imposterHint);
+
+function setIntel(v) { state.intel = v; if (v !== 'decoy') state.blind = false; save(); renderIntel(); }
+function setBlind(v) { state.blind = v; save(); renderIntel(); }
+function renderIntel() {
+  ['none', 'category', 'decoy'].forEach((k) => {
+    document.getElementById('intel-' + k).classList.toggle('on', state.intel === k);
+  });
+  document.getElementById('intel-desc').textContent = INTEL_DESC[state.intel];
+  const blindBlock = document.getElementById('blind-block');
+  blindBlock.style.display = state.intel === 'decoy' ? '' : 'none';
+  document.getElementById('blind-off').classList.toggle('on', !state.blind);
+  document.getElementById('blind-on').classList.toggle('on', state.blind);
+  document.getElementById('blind-desc').textContent = state.blind
+    ? 'Every card looks identical — even the imposter thinks they\'re crew. Nobody is safe, everybody is sus.'
+    : 'The imposter is told it\'s them, plus their decoy word.';
 }
 
 function playerName(i) { return state.players[i].trim() || 'Player ' + (i + 1); }
@@ -437,6 +549,7 @@ function playerName(i) { return state.players[i].trim() || 'Player ' + (i + 1); 
 /* ============ ROUND ============ */
 function startRound() {
   const n = state.players.length;
+  while (state.scores.length < n) state.scores.push(0);
   const roles = new Array(n).fill(false);
   const pool = Array.from(Array(n).keys());
   for (let k = 0; k < state.imposters; k++) {
@@ -445,7 +558,7 @@ function startRound() {
     pool.splice(pick, 1);
   }
 
-  round = { roles, revealIdx: 0, cardOpen: false, seen: false, votes: new Array(n).fill(0) };
+  round = { roles, revealIdx: 0, cardOpen: false, seen: false, votes: new Array(n).fill(0), scored: false };
 
   if (state.mode === 'word') {
     const catNames = Object.keys(CATEGORIES);
@@ -454,7 +567,12 @@ function startRound() {
       : state.category;
     round.category = cat;
     const words = CATEGORIES[cat];
-    round.word = words[Math.floor(Math.random() * words.length)];
+    const wi = Math.floor(Math.random() * words.length);
+    round.word = words[wi];
+    // Decoy: a different word from the same category.
+    let di = Math.floor(Math.random() * (words.length - 1));
+    if (di >= wi) di += 1;
+    round.decoy = words[di];
   } else {
     const pair = QUESTION_PAIRS[Math.floor(Math.random() * QUESTION_PAIRS.length)];
     const flip = Math.random() < 0.5;
@@ -476,30 +594,45 @@ function showReveal() {
   document.getElementById('card').classList.remove('open');
   document.getElementById('reveal-next').disabled = true;
 
-  const face = document.getElementById('secret-face');
   const catEl = document.getElementById('secret-cat');
   const wordEl = document.getElementById('secret-word');
   const noteEl = document.getElementById('secret-note');
   const isImp = round.roles[i];
-  face.classList.toggle('imposter', isImp && state.mode === 'word');
-  wordEl.classList.remove('qtext');
+  wordEl.className = 'secret-word stampable';
 
   if (state.mode === 'word') {
-    if (isImp) {
-      catEl.textContent = state.imposterHint ? 'Category: ' + round.category : 'No category for you';
-      wordEl.textContent = 'Imposter';
-      noteEl.textContent = 'Blend in. Give a clue vague enough to pass — then figure out the word before they figure out you.';
+    const blindGame = state.intel === 'decoy' && state.blind;
+    if (blindGame) {
+      // Everyone's card is formatted identically — imposter included.
+      catEl.textContent = round.category;
+      wordEl.textContent = isImp ? round.decoy : round.word;
+      noteEl.textContent = 'One file in this circle is wrong — maybe even yours. Clue carefully, trust no one.';
+    } else if (isImp) {
+      wordEl.classList.add('imp-stamp');
+      if (state.intel === 'decoy') {
+        catEl.textContent = 'Category: ' + round.category;
+        wordEl.textContent = 'Imposter';
+        noteEl.innerHTML = 'Your decoy word: <strong>' + round.decoy + '</strong>. The real word is something else in this category — bluff off yours and triangulate.';
+      } else if (state.intel === 'category') {
+        catEl.textContent = 'Category: ' + round.category;
+        wordEl.textContent = 'Imposter';
+        noteEl.textContent = 'You know the category, not the word. Blend in and figure it out before they figure out you.';
+      } else {
+        catEl.textContent = 'No intel for you';
+        wordEl.textContent = 'Imposter';
+        noteEl.textContent = 'Nothing. Pure bluff. Listen hard, commit to vague.';
+      }
     } else {
       catEl.textContent = round.category;
       wordEl.textContent = round.word;
       noteEl.textContent = 'Your clue should prove you know it — without handing it to the imposter.';
     }
   } else {
-    catEl.textContent = isImp ? 'Your question (imposter)' : 'Your question';
+    catEl.textContent = 'Your question';
     wordEl.classList.add('qtext');
     wordEl.textContent = isImp ? round.impQ : round.crewQ;
     noteEl.textContent = isImp
-      ? 'You got a DIFFERENT question than everyone else. Answer confidently and blend in.'
+      ? 'Heads up: you got a DIFFERENT question than everyone else. Answer confidently and blend in.'
       : 'Everyone answers out loud. One of you got a different question.';
   }
 }
@@ -581,6 +714,45 @@ function toVote() {
 }
 
 /* ============ RESULT ============ */
+function applyScores(outcome) {
+  // outcome: 'caught' (crew win) | 'escaped' | 'stolen'
+  if (round.scored) return;
+  round.scored = true;
+  state.players.forEach((_, i) => {
+    if (round.roles[i]) {
+      if (outcome === 'escaped') state.scores[i] += 2;
+      if (outcome === 'stolen') state.scores[i] += 1;
+    } else {
+      if (outcome === 'caught') state.scores[i] += 1;
+    }
+  });
+  save();
+  renderScoreboard();
+}
+function unApplyStealAdjust() {
+  // Called when 'caught' flips to 'stolen': crew already got +1, imposter gets +1 now, crew keeps theirs? No —
+  // steal means the imposter takes the round: remove crew's +1, give imposters +1.
+  state.players.forEach((_, i) => {
+    if (round.roles[i]) state.scores[i] += 1;
+    else state.scores[i] = Math.max(0, state.scores[i] - 1);
+  });
+  save();
+  renderScoreboard();
+}
+
+function renderScoreboard() {
+  const sb = document.getElementById('scoreboard');
+  const ranked = state.players
+    .map((_, i) => ({ name: playerName(i), pts: state.scores[i] || 0 }))
+    .sort((a, b) => b.pts - a.pts);
+  let html = '<div class="sb-title">Season scoreboard</div><div class="reveal-list" style="margin-top:0;">';
+  ranked.forEach((p, idx) => {
+    html += '<div class="r"><div class="who">' + (idx === 0 && p.pts > 0 ? '👑 ' : '') + p.name
+      + '</div><div class="role">' + p.pts + ' pts</div></div>';
+  });
+  sb.innerHTML = html + '</div>';
+}
+
 function revealResult() {
   const max = Math.max.apply(null, round.votes);
   const accused = round.votes
@@ -603,6 +775,7 @@ function revealResult() {
     stamp.className = 'result-stamp escaped';
     line.textContent = 'The vote missed. ' + impNames + ' slipped away with it — imposter wins.';
   }
+  applyScores(caught ? 'caught' : 'escaped');
 
   document.getElementById('steal-block').style.display =
     state.mode === 'word' && caught ? '' : 'none';
@@ -629,13 +802,15 @@ function revealResult() {
   extraRole.className = 'role';
   if (state.mode === 'word') {
     extraWho.textContent = 'The word';
-    extraRole.textContent = round.word + ' · ' + round.category;
+    extraRole.textContent = round.word + ' · ' + round.category
+      + (state.intel === 'decoy' ? ' · decoy: ' + round.decoy : '');
   } else {
     extraWho.textContent = "Imposter's question";
     extraRole.textContent = round.impQ;
   }
   extra.append(extraWho, extraRole);
   list.appendChild(extra);
+  renderScoreboard();
   show('s-result');
 }
 
@@ -646,7 +821,8 @@ function stealResult(guessed) {
   if (guessed) {
     stamp.textContent = 'Stolen';
     stamp.className = 'result-stamp escaped';
-    line.textContent = 'Caught — but named the word. The imposter steals the round.';
+    line.textContent = 'Caught — but named the real word. The imposter steals the round.';
+    unApplyStealAdjust();
   } else {
     line.textContent += ' And the guess was wrong. Clean sweep for the crew.';
   }
