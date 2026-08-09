@@ -140,6 +140,14 @@
   .secret-note { margin-top: 18px; font-size: 13px; color: #6d675a; line-height: 1.45; }
   .secret-note strong { color: var(--red-dim); }
 
+  .answer-zone { margin: 6px auto 0; width: 100%; max-width: 340px; }
+  .answer-zone input {
+    width: 100%; background: var(--panel); border: 1px solid var(--line); color: var(--text);
+    border-radius: 10px; padding: 14px; font-size: 16px; font-family: var(--body); text-align: center;
+    -webkit-user-select: text; user-select: text;
+  }
+  .answer-zone input:focus { outline: none; border-color: var(--gold); }
+
   .center { text-align: center; }
   .big-num { font-family: var(--display); font-size: 76px; font-weight: 700; line-height: 1; }
   .timer.warn { color: var(--red); animation: pulse 1s ease infinite; }
@@ -268,6 +276,9 @@
         </div>
       </div>
     </div>
+    <div class="answer-zone" id="answer-zone" style="display:none;">
+      <input id="answer-input" maxlength="60" placeholder="Type your answer..." autocomplete="off">
+    </div>
     <footer class="nav">
       <button class="btn primary" id="reveal-next" onclick="nextReveal()" disabled>I've memorized it</button>
     </footer>
@@ -278,6 +289,7 @@
     <div class="eyebrow">All eyes open</div>
     <h2 style="margin:4px 0;" id="discuss-title">Give your clues</h2>
     <p class="sub" id="discuss-sub"></p>
+    <div class="reveal-list" id="answers-list" style="display:none; margin-top:14px;"></div>
     <div class="center" style="margin-top:22px;">
       <div class="sub">Starts with</div>
       <div class="big-num" style="font-size:44px;" id="discuss-starter"></div>
@@ -671,7 +683,7 @@ function startRound() {
     pool.splice(pick, 1);
   }
 
-  round = { roles, revealIdx: 0, cardOpen: false, seen: false, votes: new Array(n).fill(0), scored: false };
+  round = { roles, revealIdx: 0, cardOpen: false, seen: false, votes: new Array(n).fill(0), answers: new Array(n).fill(''), scored: false };
 
   if (state.mode === 'word') {
     const catNames = Object.keys(CATEGORIES);
@@ -707,7 +719,12 @@ function showReveal() {
   document.getElementById('reveal-who').textContent = playerName(i);
   document.getElementById('file-no').textContent = 'CASE No. ' + String(Math.floor(Math.random() * 900) + 100);
   document.getElementById('card').classList.remove('open');
-  document.getElementById('reveal-next').disabled = true;
+  const isQ = state.mode === 'question';
+  const zone = document.getElementById('answer-zone');
+  zone.style.display = isQ ? '' : 'none';
+  document.getElementById('answer-input').value = '';
+  document.getElementById('reveal-next').textContent = isQ ? 'Lock in my answer' : "I've memorized it";
+  updateRevealButton();
 
   const catEl = document.getElementById('secret-cat');
   const wordEl = document.getElementById('secret-word');
@@ -747,20 +764,31 @@ function showReveal() {
     wordEl.classList.add('qtext');
     wordEl.textContent = isImp ? round.impQ : round.crewQ;
     noteEl.textContent = isImp
-      ? 'Heads up: you got a DIFFERENT question than everyone else. Answer confidently and blend in.'
-      : 'Everyone answers out loud. One of you got a different question.';
+      ? 'Heads up: your question is DIFFERENT from everyone else\'s. Type something short that won\'t stick out.'
+      : 'Type your answer below, then seal the card and pass the phone.';
   }
+}
+
+function updateRevealButton() {
+  // The card must be sealed before the phone moves on; in question mode a
+  // typed answer is required too.
+  const sealed = round.seen && !round.cardOpen;
+  const answerOk = state.mode !== 'question'
+    || document.getElementById('answer-input').value.trim().length > 0;
+  document.getElementById('reveal-next').disabled = !(sealed && answerOk);
 }
 
 function toggleCard() {
   round.cardOpen = !round.cardOpen;
   round.seen = true;
   document.getElementById('card').classList.toggle('open', round.cardOpen);
-  // The card must be sealed again before the phone moves on.
-  document.getElementById('reveal-next').disabled = !(round.seen && !round.cardOpen);
+  updateRevealButton();
 }
 
 function nextReveal() {
+  if (state.mode === 'question') {
+    round.answers[round.revealIdx] = document.getElementById('answer-input').value.trim();
+  }
   if (round.revealIdx < state.players.length - 1) {
     round.revealIdx += 1;
     showReveal();
@@ -772,10 +800,27 @@ function nextReveal() {
 /* ============ DISCUSSION ============ */
 function startDiscussion() {
   const isWord = state.mode === 'word';
-  document.getElementById('discuss-title').textContent = isWord ? 'Give your clues' : 'Answer out loud';
+  document.getElementById('discuss-title').textContent = isWord ? 'Give your clues' : 'The answers are in';
   document.getElementById('discuss-sub').textContent = isWord
     ? 'One word each, around the circle. Then argue.'
-    : 'The question was: "' + round.crewQ + '" — everyone answers. One of you is lying.';
+    : 'The question: "' + round.crewQ + '" — but one of these answers came from a different question entirely.';
+  const ansList = document.getElementById('answers-list');
+  ansList.style.display = isWord ? 'none' : '';
+  if (!isWord) {
+    ansList.innerHTML = '';
+    state.players.forEach((_, i) => {
+      const r = document.createElement('div');
+      r.className = 'r';
+      const who = document.createElement('div');
+      who.className = 'who';
+      who.textContent = playerName(i);
+      const ans = document.createElement('div');
+      ans.className = 'role';
+      ans.textContent = round.answers[i] || '(no answer)';
+      r.append(who, ans);
+      ansList.appendChild(r);
+    });
+  }
   document.getElementById('discuss-starter').textContent = playerName(round.starter);
   stopTimer(true);
   show('s-discuss');
@@ -902,7 +947,9 @@ function revealResult() {
     r.className = 'r';
     const who = document.createElement('div');
     who.className = 'who';
-    who.textContent = playerName(i) + (round.votes[i] > 0 ? '  ·  ' + round.votes[i] + ' vote' + (round.votes[i] > 1 ? 's' : '') : '');
+    who.textContent = playerName(i)
+      + (state.mode === 'question' && round.answers[i] ? ' · \u201C' + round.answers[i] + '\u201D' : '')
+      + (round.votes[i] > 0 ? '  ·  ' + round.votes[i] + ' vote' + (round.votes[i] > 1 ? 's' : '') : '');
     const role = document.createElement('div');
     role.className = 'role' + (round.roles[i] ? ' imp' : '');
     role.textContent = round.roles[i] ? 'Imposter' : 'Crew';
@@ -944,6 +991,9 @@ function stealResult(guessed) {
 }
 
 /* ============ INIT ============ */
+document.getElementById('answer-input').addEventListener('input', () => {
+  if (round) updateRevealButton();
+});
 load();
 syncSetup();
 </script>
